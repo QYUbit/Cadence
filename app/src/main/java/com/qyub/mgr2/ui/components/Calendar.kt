@@ -37,7 +37,7 @@ fun Calendar(
     val firstDayOfWeek = month.atDay(1).dayOfWeek
 
     val firstDayIndex = (firstDayOfWeek.value % 7)
-    val weeks = ((daysInMonth + firstDayIndex - 1) / 7) + 1
+    val weeks = 6
 
     val currentDay = LocalDate.now().dayOfMonth
 
@@ -75,7 +75,7 @@ fun Calendar(
             ) {
                 for (dow in 1..7) {
                     val dayNumber =
-                        if ((week == 0 && dow < firstDayIndex) || dayCounter > daysInMonth) {
+                        if ((week == 0 && dow <= firstDayIndex - 1) || dayCounter > daysInMonth) {
                             null
                         } else {
                             dayCounter++
