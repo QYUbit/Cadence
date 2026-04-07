@@ -13,16 +13,12 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsControllerCompat
-import androidx.lifecycle.ViewModelProvider
-import com.qyub.mgr2.data.db.AppDatabase
-import com.qyub.mgr2.data.repo.EventRepository
 import com.qyub.mgr2.ui.navigation.AppNavigation
-import com.qyub.mgr2.ui.screens.timeline.TimelineViewModel
-import com.qyub.mgr2.ui.screens.timeline.TimelineViewModelFactory
 import com.qyub.mgr2.ui.theme.AppTheme
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-    private lateinit var timelineViewModel: TimelineViewModel
 
     private val notificationPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -41,12 +37,6 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        val db = AppDatabase.getInstance(applicationContext)
-        val eventRepository = EventRepository(db.eventDao(), applicationContext)
-        val timelineViewModelFactory = TimelineViewModelFactory(eventRepository)
-
-        timelineViewModel = ViewModelProvider(this, timelineViewModelFactory)[TimelineViewModel::class.java]
-
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
         setContent {
@@ -59,7 +49,7 @@ class MainActivity : ComponentActivity() {
                     window.navigationBarColor = Color.TRANSPARENT
                 }
 
-                AppNavigation(eventRepository, timelineViewModel)
+                AppNavigation()
             }
         }
     }

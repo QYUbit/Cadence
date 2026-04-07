@@ -4,9 +4,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import kotlinx.serialization.Serializable
 import java.time.LocalDate
 import java.time.LocalTime
 
+@Serializable
 @Entity(
     tableName = "events",
     indices = [Index(value = ["exceptionParentId"])]

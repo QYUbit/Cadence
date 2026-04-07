@@ -11,26 +11,24 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.qyub.mgr2.data.repo.EventRepository
 import com.qyub.mgr2.ui.components.AppDrawer
 import com.qyub.mgr2.ui.screens.calendar.CalendarScreen
 import com.qyub.mgr2.ui.screens.settings.SettingsScreen
+import com.qyub.mgr2.ui.screens.settings.SettingsViewModel
 import com.qyub.mgr2.ui.screens.timeline.TimelineScreen
 import com.qyub.mgr2.ui.screens.timeline.TimelineViewModel
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 
 @Composable
-fun AppNavigation(
-    eventRepo: EventRepository,
-    timelineViewModel: TimelineViewModel
-) {
+fun AppNavigation() {
     val navController = rememberNavController()
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
@@ -73,9 +71,9 @@ fun AppNavigation(
                         nullable = true
                     })
                 ) { backStackEntry ->
-                    println(backStackEntry.arguments?.getString("day"))
                     val dayString = backStackEntry.arguments?.getString("day")
                     val day = LocalDate.parse(dayString)
+                    val timelineViewModel: TimelineViewModel = hiltViewModel()
 
                     TimelineScreen(
                         vm = timelineViewModel,
@@ -96,8 +94,9 @@ fun AppNavigation(
                 }
 
                 composable(NavigationRoutes.Settings.fullRoute) {
+                    val settingsViewModel: SettingsViewModel = hiltViewModel()
                     SettingsScreen (
-                        repo = eventRepo,
+                        viewModel = settingsViewModel,
                         onMenuRequest = { scope.launch {
                             drawerState.open()
                         }},

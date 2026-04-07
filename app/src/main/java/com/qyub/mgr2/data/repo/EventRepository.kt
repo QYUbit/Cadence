@@ -5,19 +5,22 @@ import com.qyub.mgr2.data.db.EventDao
 import com.qyub.mgr2.data.models.Event
 import com.qyub.mgr2.data.models.isActiveAtDate
 import com.qyub.mgr2.data.notifications.NotificationScheduler
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import java.time.LocalDate
+import javax.inject.Inject
+import javax.inject.Singleton
 
-
-class EventRepository(
+@Singleton
+class EventRepository @Inject constructor(
     private val dao: EventDao,
-    private val context: Context? = null
+    @ApplicationContext private val context: Context
 ) {
     private val notificationScheduler by lazy {
-        context?.let { NotificationScheduler(it) }
+        NotificationScheduler(context)
     }
 
     fun allEvents(): Flow<List<Event>> {
@@ -35,27 +38,25 @@ class EventRepository(
     suspend fun addEvent(event: Event) {
         dao.insert(event)
 
-        if (event.hasNotification && notificationScheduler != null) {
-            notificationScheduler!!.scheduleNotification(event, event.notificationMinutes)
+        if (event.hasNotification) {
+            notificationScheduler.scheduleNotification(event, event.notificationMinutes)
         }
     }
 
     suspend fun updateEvent(event: Event) {
         dao.update(event)
 
-        notificationScheduler?.let { scheduler ->
-            if (event.hasNotification) {
-                scheduler.rescheduleNotification(event, event.notificationMinutes)
-            } else {
-                scheduler.cancelNotification(event.id, event.notificationMinutes)
-            }
+        if (event.hasNotification) {
+            notificationScheduler.rescheduleNotification(event, event.notificationMinutes)
+        } else {
+            notificationScheduler.cancelNotification(event.id, event.notificationMinutes)
         }
     }
 
     suspend fun deleteEvent(event: Event) = withContext(Dispatchers.IO) {
         dao.delete(event)
 
-        notificationScheduler?.cancelNotification(event.id, event.notificationMinutes)
+        notificationScheduler.cancelNotification(event.id, event.notificationMinutes)
     }
 
     suspend fun deleteAllEvents() = withContext(Dispatchers.IO) {
