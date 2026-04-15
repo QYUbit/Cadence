@@ -171,7 +171,7 @@ fun Timeline(
             }
 
             uiEvents.forEach { event ->
-                EventCard(
+                EventBox(
                     event = event,
                     onClick = { onEventClick(event.event) },
                     fullWidth = maxWidth
@@ -201,12 +201,6 @@ fun Timeline(
 fun getCurrentMinute(): Int {
     val now = LocalTime.now()
     return now.hour * 60 + now.minute
-}
-
-fun getAllDayEvents(events: List<Event>): List<UIEvent> {
-    return events
-        .filter { it.isAllDay }
-        .map { UIEvent(it, 0, 30, 0f, 1f) }
 }
 
 fun getEventDimensions(events: List<Event>): List<UIEvent> {

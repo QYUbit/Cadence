@@ -20,8 +20,8 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.qyub.mgr2.ui.components.AppDrawer
 import com.qyub.mgr2.ui.screens.calendar.CalendarScreen
+import com.qyub.mgr2.ui.screens.inbox.InboxScreen
 import com.qyub.mgr2.ui.screens.settings.SettingsScreen
-import com.qyub.mgr2.ui.screens.settings.SettingsViewModel
 import com.qyub.mgr2.ui.screens.timeline.TimelineScreen
 import com.qyub.mgr2.ui.screens.timeline.TimelineViewModel
 import kotlinx.coroutines.launch
@@ -73,10 +73,8 @@ fun AppNavigation() {
                 ) { backStackEntry ->
                     val dayString = backStackEntry.arguments?.getString("day")
                     val day = LocalDate.parse(dayString)
-                    val timelineViewModel: TimelineViewModel = hiltViewModel()
 
                     TimelineScreen(
-                        vm = timelineViewModel,
                         startDay = day,
                         onMenuRequest = { scope.launch { drawerState.open() } }
                     )
@@ -93,10 +91,16 @@ fun AppNavigation() {
                     )
                 }
 
+                composable(NavigationRoutes.Inbox.fullRoute) {
+                    InboxScreen(
+                        onMenuRequest = { scope.launch {
+                            drawerState.open()
+                        }},
+                    )
+                }
+
                 composable(NavigationRoutes.Settings.fullRoute) {
-                    val settingsViewModel: SettingsViewModel = hiltViewModel()
                     SettingsScreen (
-                        viewModel = settingsViewModel,
                         onMenuRequest = { scope.launch {
                             drawerState.open()
                         }},

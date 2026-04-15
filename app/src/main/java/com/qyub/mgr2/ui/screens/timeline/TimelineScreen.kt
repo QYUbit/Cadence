@@ -4,10 +4,13 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
@@ -40,11 +43,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.qyub.mgr2.data.models.Event
 import com.qyub.mgr2.ui.components.EventBottomSheet
 import com.qyub.mgr2.ui.components.EventCard
 import com.qyub.mgr2.ui.components.Timeline
-import com.qyub.mgr2.ui.components.getAllDayEvents
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
@@ -52,7 +55,7 @@ import java.time.temporal.ChronoUnit
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TimelineScreen(
-    vm: TimelineViewModel,
+    vm: TimelineViewModel = hiltViewModel(),
     onMenuRequest: () -> Unit,
     startDay: LocalDate = LocalDate.now()
 ) {
@@ -101,7 +104,9 @@ fun TimelineScreen(
         },
         topBar = {
             TopAppBar(
-                title = { Text(displayDay.format(DateTimeFormatter.ofPattern("dd.MM.yyyy"))) },
+                title = {
+                    Text("${displayDay.format(DateTimeFormatter.ofPattern("dd.MM.yyyy"))} — ${formatDayOfWeek(displayDay)}")
+                },
                 navigationIcon = {
                     IconButton(
                         onClick = onMenuRequest
@@ -143,21 +148,23 @@ fun TimelineScreen(
 
             Column {
                 if (allDayEvents.isNotEmpty()) {
-                    LazyRow(
+                    FlowRow(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 6.dp),
+                            .padding(vertical = 6.dp, horizontal = 8.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        contentPadding = PaddingValues(horizontal = 8.dp)
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
-                        items(allDayEvents) { ev ->
+                        allDayEvents.forEach { ev ->
                             EventCard(
                                 event = ev,
                                 onClick = {
-                                    eventToEdit = ev.event
+                                    eventToEdit = ev
                                     showSheet = true
                                 },
-                                fullWidth = 200.dp
+                                modifier = Modifier
+                                    .height(30.dp)
+                                    .wrapContentWidth(unbounded = true)
                             )
                         }
                     }
@@ -190,4 +197,13 @@ fun TimelineScreen(
             )
         }
     }
+}
+
+fun formatDayOfWeek(date: LocalDate): String {
+    return date.dayOfWeek.name.lowercase().replaceFirstChar { it.uppercase() }
+}
+
+fun getAllDayEvents(events: List<Event>): List<Event> {
+    return events
+        .filter { it.isAllDay }
 }

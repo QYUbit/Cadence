@@ -1,6 +1,5 @@
 package com.qyub.mgr2.ui.components
 
-import android.app.TimePickerDialog
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -20,8 +19,6 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material3.DatePicker
-import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -30,8 +27,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -66,24 +61,28 @@ val repeatLabels = listOf(
 fun EventBottomSheet(
     initialEvent: Event? = null,
     currentDate: LocalDate = LocalDate.now(),
+    isInbox: Boolean = false,
     onSave: (Event) -> Unit,
     onDismiss: () -> Unit,
     onDelete: (() -> Unit)? = null
 ) {
     var title by remember { mutableStateOf(initialEvent?.title ?: "") }
     var description by remember { mutableStateOf(initialEvent?.description ?: "") }
+    var isInboxEvent by remember { mutableStateOf(initialEvent?.isInbox ?: isInbox) }
     var isRepeating by remember { mutableStateOf(initialEvent?.isRepeating ?: false) }
     var repeatType by remember { mutableStateOf(initialEvent?.repeatFor ?: RepeatType.NONE) }
     var repeatAt by remember { mutableStateOf(initialEvent?.repeatAt) }
-    var date by remember { mutableStateOf(initialEvent?.date ?: currentDate) }
+    var date by remember { mutableStateOf(initialEvent?.date ?: if (!isInbox) currentDate else null) }
     var isAllDay by remember { mutableStateOf(initialEvent?.isAllDay ?: false) }
-    var startTime by remember { mutableStateOf(initialEvent?.startTime ?: LocalTime.of(0, 0)) }
-    var endTime by remember { mutableStateOf(getEventEnd(initialEvent) ?: LocalTime.of(0, 0)) }
+    var startTime by remember { mutableStateOf(initialEvent?.startTime ?: LocalTime.of(LocalTime.now().hour + 1 , 0)) }
+    var duration by remember { mutableIntStateOf(initialEvent?.duration ?: 60) }
     var color by remember { mutableStateOf(initialEvent?.color ?: PrimaryLight) }
     var hasReminder by remember { mutableStateOf(initialEvent?.hasNotification ?: false) }
     val reminderType by remember { mutableStateOf(initialEvent?.notificationType ?: NotificationType.REMINDER) }
     var reminderMinutes by remember { mutableIntStateOf(initialEvent?.notificationMinutes ?: 15) }
 
+    var startTimePickerOpen by remember { mutableStateOf(false) }
+    var endTimePickerOpen by remember { mutableStateOf(false) }
     var datePickerOpen by remember { mutableStateOf(false) }
     var colorPickerOpen by remember { mutableStateOf(false) }
     var notificationTimePickerOpen by remember { mutableStateOf(false) }
@@ -94,8 +93,6 @@ fun EventBottomSheet(
     val modalBottomSheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = true
     )
-
-    val context = LocalContext.current
 
     ModalBottomSheet(
         sheetState = modalBottomSheetState,
@@ -119,8 +116,7 @@ fun EventBottomSheet(
                     modifier = Modifier
                         .clip(CircleShape)
                         .clickable {
-                            // Kotlin compiler bad, so check again
-                            if (canDelete && onDelete != null) {
+                            if (canDelete) {
                                 onDelete()
                             }
                             onDismiss()
@@ -143,6 +139,7 @@ fun EventBottomSheet(
                             Event(
                                 id = initialEvent?.id ?: 0,
                                 title = title,
+                                isInbox = isInboxEvent,
                                 description = description.ifEmpty { null },
                                 isRepeating = isRepeating,
                                 repeatFor = repeatType,
@@ -150,7 +147,7 @@ fun EventBottomSheet(
                                 date = if (!isRepeating) date else null,
                                 isAllDay = isAllDay,
                                 startTime = if (isAllDay) null else startTime,
-                                duration = if (isAllDay) null else getDuration(startTime, endTime),
+                                duration = if (isAllDay) null else duration,
                                 color = color,
                                 hasNotification = if (isAllDay) false else hasReminder,
                                 notificationType = reminderType,
@@ -176,28 +173,31 @@ fun EventBottomSheet(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Surface(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { repeatPickerOpen = true }
-                    .padding(vertical = 8.dp),
-                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-                shape = MaterialTheme.shapes.medium
-            ) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
+            if (!isInbox) {
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { repeatPickerOpen = true }
+                        .padding(vertical = 8.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                    shape = MaterialTheme.shapes.medium
                 ) {
-                    Text(
-                        text = "Repeat: ",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                    Text(
-                        text = repeatLabels.filter { it.first == repeatType }.map { it.second }[0],
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.primary
-                    )
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = "Repeat: ",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                        Text(
+                            text = repeatLabels.filter { it.first == repeatType }
+                                .map { it.second }[0],
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
                 }
             }
 
@@ -216,7 +216,7 @@ fun EventBottomSheet(
                 )
             }
 
-            if (repeatType == RepeatType.NONE) {
+            if (repeatType == RepeatType.NONE && !isInbox) {
                 OutlinedTextField(
                     value = date.toString(),
                     onValueChange = {},
@@ -272,33 +272,14 @@ fun EventBottomSheet(
             }
 
             if (datePickerOpen) {
-                val datePickerState = rememberDatePickerState(
-                    initialSelectedDateMillis = date.toEpochDay() * 86_400_000 // 24 * 60 * 60 * 1000
-                )
-
                 DatePickerDialog(
-                    onDismissRequest = {
+                    initialDate = date ?: LocalDate.now(),
+                    onDismiss = { datePickerOpen = false },
+                    onConfirm = {
+                        date = it
                         datePickerOpen = false
-                    },
-                    confirmButton = {
-                        TextButton(
-                            onClick = {
-                                datePickerOpen = false
-                                val selected = datePickerState.selectedDateMillis
-                                if (selected != null) {
-                                    date = LocalDate.ofEpochDay(selected / 86_400_000)
-                                }
-                            },
-                        ) {
-                            Text("OK")
-                        }
-                    },
-                    dismissButton = {
-                        TextButton(onClick = { datePickerOpen = false }) { Text("Cancel") }
-                    },
-                ) {
-                    DatePicker(state = datePickerState)
-                }
+                    }
+                )
             }
 
             if (monthDatePickerOpen) {
@@ -329,48 +310,64 @@ fun EventBottomSheet(
                 )
             }
 
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Is all-day?")
-                Switch(checked = isAllDay, onCheckedChange = { isAllDay = it })
+            if (!isInbox) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Is all-day?")
+                    Switch(checked = isAllDay, onCheckedChange = { isAllDay = it })
+                }
             }
 
-            // Use compose
-            fun openTimePicker(initial: LocalTime, onTimeSelected: (LocalTime) -> Unit) {
-                TimePickerDialog(
-                    context,
-                    { _, hour, minute -> onTimeSelected(LocalTime.of(hour, minute)) },
-                    initial.hour,
-                    initial.minute,
-                    true
-                ).show()
-            }
-
-            if (!isAllDay) {
-                Row (modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Absolute.SpaceBetween) {
+            if (!isAllDay && !isInbox) {
+                Row (
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Absolute.SpaceBetween
+                ) {
                     OutlinedTextField(
                         value = startTime.toString(),
                         onValueChange = {},
                         modifier = Modifier
                             .fillMaxWidth(0.4f)
-                            .clickable { openTimePicker(startTime) { startTime = it } },
+                            .clickable { startTimePickerOpen = true },
                         enabled = false,
                         label = { Text("Start time") }
                     )
 
                     OutlinedTextField(
-                        value = endTime.toString(),
+                        value = getEndTime(startTime, duration).toString(),
                         onValueChange = {},
                         modifier = Modifier
                             .fillMaxWidth(0.7f)
-                            .clickable { openTimePicker(endTime) { endTime = it } },
+                            .clickable { endTimePickerOpen = true },
                         enabled = false,
                         label = { Text("End time") }
                     )
                 }
+            }
+
+            if (startTimePickerOpen) {
+                TimePickerDialog(
+                    initialTime = startTime,
+                    onDismiss = { startTimePickerOpen = false },
+                    onConfirm = { selected ->
+                        startTime = selected
+                        startTimePickerOpen = false
+                    }
+                )
+            }
+
+            if (endTimePickerOpen) {
+                TimePickerDialog(
+                    initialTime = getEndTime(startTime, duration),
+                    onDismiss = { endTimePickerOpen = false },
+                    onConfirm = { selected ->
+                        duration = getDuration(startTime, selected)
+                        endTimePickerOpen = false
+                    }
+                )
             }
 
             Row (
@@ -400,7 +397,7 @@ fun EventBottomSheet(
             }
 
             Column {
-                if (!isAllDay) {
+                if (!isAllDay && !isInbox) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -430,7 +427,7 @@ fun EventBottomSheet(
                     }
                 }
 
-                if (hasReminder && !isAllDay) {
+                if (hasReminder && !isAllDay && !isInbox) {
                     Surface(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -483,15 +480,14 @@ fun EventBottomSheet(
     }
 }
 
-private fun getEventEnd(event: Event?): LocalTime? {
-    if (event == null) return null
-    return event.startTime?.plusMinutes((event.duration ?: 0).toLong())
-}
-
 private fun getDuration(start: LocalTime, end: LocalTime): Int {
     val startMinutes = start.toSecondOfDay() / 60
     val endMinutes = end.toSecondOfDay() / 60
     return endMinutes - startMinutes
+}
+
+private fun getEndTime(start: LocalTime, duration: Int): LocalTime {
+    return start.plusMinutes(duration.toLong())
 }
 
 private fun formatNotificationTime(minutes: Int): String {

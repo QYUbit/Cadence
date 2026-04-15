@@ -19,6 +19,9 @@ interface EventDao {
     @Query("SELECT * FROM events WHERE isRepeating = 1 OR date = :targetDate")
     fun getEventsForDate(targetDate: Long): Flow<List<Event>>
 
+    @Query("SELECT * FROM events WHERE repeatFor = 'NONE'")
+    fun getInboxEvents(): Flow<List<Event>>
+
     // I know that upsert exists
     @Insert
     suspend fun insert(event: Event)

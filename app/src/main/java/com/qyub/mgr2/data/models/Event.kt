@@ -19,6 +19,8 @@ data class Event(
     val title: String,
     val description: String? = null,
 
+    val isInbox: Boolean = false,
+
     val isRepeating: Boolean = false,
     val repeatFor: RepeatType = RepeatType.NONE,
     val repeatAt: List<Int>? = null,

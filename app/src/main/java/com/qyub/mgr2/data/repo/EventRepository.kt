@@ -19,6 +19,7 @@ class EventRepository @Inject constructor(
     private val dao: EventDao,
     @ApplicationContext private val context: Context
 ) {
+    // TODO Hilt DI
     private val notificationScheduler by lazy {
         NotificationScheduler(context)
     }
@@ -33,6 +34,10 @@ class EventRepository @Inject constructor(
             .map { events ->
                 events.filter { it.isActiveAtDate(date) }
             }
+    }
+
+    fun inboxEvents(): Flow<List<Event>> {
+        return dao.getInboxEvents()
     }
 
     suspend fun addEvent(event: Event) {
