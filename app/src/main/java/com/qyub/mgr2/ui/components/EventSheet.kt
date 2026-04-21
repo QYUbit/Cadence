@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -38,7 +39,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.qyub.mgr2.data.models.Event
 import com.qyub.mgr2.data.models.NotificationType
@@ -46,7 +46,7 @@ import com.qyub.mgr2.data.models.RepeatType
 import com.qyub.mgr2.ui.theme.PrimaryLight
 import java.time.LocalDate
 import java.time.LocalTime
-import java.time.MonthDay
+import kotlin.math.min
 
 val repeatLabels = listOf(
     RepeatType.NONE to "Once",
@@ -74,7 +74,7 @@ fun EventBottomSheet(
     var repeatAt by remember { mutableStateOf(initialEvent?.repeatAt) }
     var date by remember { mutableStateOf(initialEvent?.date ?: if (!isInbox) currentDate else null) }
     var isAllDay by remember { mutableStateOf(initialEvent?.isAllDay ?: false) }
-    var startTime by remember { mutableStateOf(initialEvent?.startTime ?: LocalTime.of(LocalTime.now().hour + 1 , 0)) }
+    var startTime by remember { mutableStateOf(initialEvent?.startTime ?: LocalTime.of(min(LocalTime.now().hour + 1, 23) , 0)) }
     var duration by remember { mutableIntStateOf(initialEvent?.duration ?: 60) }
     var color by remember { mutableStateOf(initialEvent?.color ?: PrimaryLight) }
     var hasReminder by remember { mutableStateOf(initialEvent?.hasNotification ?: false) }
@@ -163,14 +163,14 @@ fun EventBottomSheet(
                 value = title,
                 onValueChange = { title = it },
                 label = { Text("Title") },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth().imePadding()
             )
 
             OutlinedTextField(
                 value = description,
                 onValueChange = { description = it },
                 label = { Text("Description") },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth().imePadding()
             )
 
             if (!isInbox) {
@@ -258,7 +258,7 @@ fun EventBottomSheet(
 
             if (repeatType == RepeatType.YEAR_DAY) {
                 OutlinedTextField(
-                    value = if (repeatAt != null && repeatAt!!.size == 2) "${repeatAt!![0]}.${repeatAt!![1]}." else "",
+                    value = if (repeatAt != null && repeatAt!!.size == 2) formatYearDate(repeatAt!![0], repeatAt!![1]) else "",
                     onValueChange = {},
                     modifier = Modifier
                         .fillMaxWidth()
@@ -283,7 +283,15 @@ fun EventBottomSheet(
             }
 
             if (monthDatePickerOpen) {
-                MonthDateDialog(
+                MonthDatePickerDialog(
+                    initialDay = if (repeatAt != null && repeatAt!!.size == 1) repeatAt!![0] else 1,
+                    onDismiss = { monthDatePickerOpen = false },
+                    onConfirm = { day ->
+                        repeatAt = listOf(day)
+                        monthDatePickerOpen = false
+                    }
+                )
+                /*MonthDateDialog(
                     selectedDays = repeatAt ?: emptyList(),
                     onSelect = { day ->
                         repeatAt = emptyList()
@@ -296,11 +304,22 @@ fun EventBottomSheet(
 
                     },
                     onDismissRequest = { monthDatePickerOpen = false }
-                )
+                )*/
             }
 
             if (yearDatePickerOpen) {
-                YearDateDialog(
+                YearDatePickerDialog(
+                    initialDay = if (repeatAt != null && repeatAt!!.size == 2) repeatAt!![1] else 1,
+                    initialMonth = if (repeatAt != null && repeatAt!!.size == 2) repeatAt!![0] else 1,
+                    onDismiss = { yearDatePickerOpen = false },
+                    onConfirm = { month, day ->
+                        repeatAt = listOf(month, day)
+                        yearDatePickerOpen = false
+                    }
+                )
+            }
+
+            /*YearDateDialog(
                     selectedDate = if (repeatAt != null && repeatAt!!.size == 2)
                         MonthDay.of(repeatAt!![0], repeatAt!![1]) else MonthDay.now(),
                     onSelect = { day ->
@@ -308,7 +327,7 @@ fun EventBottomSheet(
                     },
                     onDismissRequest = { yearDatePickerOpen = false }
                 )
-            }
+            }*/
 
             if (!isInbox) {
                 Row(
@@ -499,6 +518,14 @@ private fun formatNotificationTime(minutes: Int): String {
         1440 -> "1 day before"
         else -> "${minutes / 1440} days before"
     }
+}
+
+private fun formatYearDate(month: Int, day: Int): String {
+    val months = listOf(
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+    )
+    return "${months[month - 1]} ${formatNumber(day)}"
 }
 
 private fun formatNumber(number: Int): String {

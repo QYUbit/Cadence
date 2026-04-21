@@ -2,6 +2,8 @@ package com.qyub.mgr2.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -13,6 +15,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -25,6 +29,7 @@ import java.time.format.DateTimeFormatter
 fun EventBox(
     event: UIEvent,
     onClick: (event: Event) -> Unit,
+    onLongPress: (event: Event) -> Unit,
     fullWidth: Dp
 ) {
     Box(
@@ -36,7 +41,12 @@ fun EventBox(
                 color = event.event.color ?: MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
                 shape = MaterialTheme.shapes.small
             )
-            .clickable { onClick(event.event) },
+            .pointerInput(event.event.id) {
+                detectTapGestures(
+                    onTap = { onClick(event.event) },
+                    onLongPress = { onLongPress(event.event) }
+                )
+            },
         contentAlignment = Alignment.TopStart
     ) {
         Column (

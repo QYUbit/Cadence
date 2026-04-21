@@ -99,7 +99,7 @@ fun Calendar(
                         if (dayNumber != null) {
                             Text(
                                 text = dayNumber.toString(),
-                                color = if (dayNumber == 18) Color.White else Color.LightGray,
+                                color = Color.LightGray,
                                 fontSize = 15.sp,
                                 modifier = Modifier.padding(8.dp)
                             )

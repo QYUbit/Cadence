@@ -18,27 +18,27 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.qyub.mgr2.data.models.Event
-import com.qyub.mgr2.ui.theme.EventColorCrimson
-import com.qyub.mgr2.ui.theme.EventColorLavender
-import com.qyub.mgr2.ui.theme.EventColorMint
-import com.qyub.mgr2.ui.theme.EventColorSky
-import com.qyub.mgr2.ui.theme.EventColorSun
 import java.time.LocalTime
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.roundToInt
 
 data class UIEvent(
     val event: Event,
@@ -48,49 +48,6 @@ data class UIEvent(
     val width: Float
 )
 
-private val sampleEvents = listOf(
-    Event(
-        id = 0,
-        title = "Example",
-        description = "go shopping",
-        startTime = LocalTime.of(16, 30),
-        duration = 30,
-        color = EventColorMint
-    ),
-    Event(
-        id = 1,
-        title = "Team Meeting",
-        description = "Weekly sync with the dev team",
-        startTime = LocalTime.of(10, 0),
-        duration = 120,
-        color = EventColorSky
-    ),
-    Event(
-        id = 2,
-        title = "Lunch Break",
-        description = "Quick meal at the café",
-        startTime = LocalTime.of(12, 30),
-        duration = 60,
-        color = EventColorSun
-    ),
-    Event(
-        id = 3,
-        title = "Gym Session",
-        description = "Cardio and weights",
-        startTime = LocalTime.of(18, 0),
-        duration = 10,
-        color = EventColorLavender
-    ),
-    Event(
-        id = 4,
-        title = "Dinner with Friends",
-        description = "Italian restaurant reservation",
-        startTime = LocalTime.of(20, 0),
-        duration = 120,
-        color = EventColorCrimson
-    )
-)
-
 @SuppressLint("DefaultLocale")
 @Composable
 fun Timeline(
@@ -98,15 +55,25 @@ fun Timeline(
     isCurrentDay: Boolean,
     scrollState: ScrollState,
     modifier: Modifier = Modifier,
-    onEventClick: (Event) -> Unit
+    onEventClick: (Event) -> Unit,
+    onEventDelete: (Event) -> Unit
 ) {
     val totalMinutes = 24 * 60
     val density = LocalDensity.current
     val hourHeight = 60
 
+    val lineColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)
+
     val uiEvents = getEventDimensions(events)
 
     var currentMinuteOfDay by remember { mutableIntStateOf(getCurrentMinute()) }
+
+
+    var draggingEventId by remember { mutableStateOf<Long?>(null) }
+    var draggingOffsetMinutes by remember { mutableFloatStateOf(0f) }
+    var contextMenuEvent by remember { mutableStateOf<Event?>(null) }
+
+    val haptic = LocalHapticFeedback.current
 
     val lifecycleOwner = LocalLifecycleOwner.current
 
@@ -124,7 +91,6 @@ fun Timeline(
         }
     }
 
-    val lineColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)
 
     Row(
         modifier = modifier
@@ -170,10 +136,25 @@ fun Timeline(
                 }
             }
 
-            uiEvents.forEach { event ->
+            uiEvents.forEach { uiEvent ->
+                val isDragging = uiEvent.event.id == draggingEventId
+                val displayTop = if (isDragging)
+                    (uiEvent.top + draggingOffsetMinutes).coerceIn(0f, (24 * 60 - uiEvent.height).toFloat())
+                else
+                    uiEvent.top.toFloat()
+
+                val displayEvent = if (isDragging)
+                    uiEvent.copy(top = displayTop.toInt())
+                else
+                    uiEvent
+
                 EventBox(
-                    event = event,
-                    onClick = { onEventClick(event.event) },
+                    event = displayEvent,
+                    onClick = { onEventClick(it) },
+                    onLongPress = {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        contextMenuEvent = it
+                    },
                     fullWidth = maxWidth
                 )
             }
@@ -194,6 +175,25 @@ fun Timeline(
                     )
                 }
             }
+        }
+
+        contextMenuEvent?.let { ev ->
+            androidx.compose.material3.AlertDialog(
+                onDismissRequest = { contextMenuEvent = null },
+                title = { Text(ev.title) },
+                confirmButton = {
+                    androidx.compose.material3.TextButton(onClick = {
+                        onEventDelete(ev)
+                        contextMenuEvent = null
+                    }) { Text("Delete", color = MaterialTheme.colorScheme.error) }
+                },
+                dismissButton = {
+                    androidx.compose.material3.TextButton(onClick = {
+                        onEventClick(ev)
+                        contextMenuEvent = null
+                    }) { Text("Edit") }
+                }
+            )
         }
     }
 }

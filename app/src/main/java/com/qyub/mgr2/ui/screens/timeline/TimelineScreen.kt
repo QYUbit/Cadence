@@ -6,10 +6,13 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -89,8 +92,10 @@ fun TimelineScreen(
     }
 
     Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         floatingActionButton = {
             FloatingActionButton(
+                modifier = Modifier.navigationBarsPadding(),
                 onClick = {
                     eventToEdit = null
                     showSheet = true
@@ -178,6 +183,7 @@ fun TimelineScreen(
                         eventToEdit = ev
                         showSheet = true
                     },
+                    onEventDelete = { ev -> vm.deleteEvent(ev) },
                     isCurrentDay = day == LocalDate.now(),
                     scrollState = scrollState
                 )
