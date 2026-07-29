@@ -2,6 +2,8 @@ package com.qyub.mgr2.ui.screens.timeline
 
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
@@ -40,17 +42,27 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.qyub.mgr2.LocalAppDrawerState
+import com.qyub.mgr2.LocalDrawerGestureStartX
 import com.qyub.mgr2.data.models.Event
 import com.qyub.mgr2.ui.components.EventBottomSheet
 import com.qyub.mgr2.ui.components.EventCard
 import com.qyub.mgr2.ui.components.Timeline
+import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
@@ -88,6 +100,24 @@ fun TimelineScreen(
         snapshotFlow { pagerState.currentPage }.collect { page ->
             val day = dayForPage(page)
             if (day != displayDay) vm.setDay(day)
+        }
+    }
+
+    val drawerState = LocalAppDrawerState.current
+    val scope = rememberCoroutineScope()
+    val gestureStartX = LocalDrawerGestureStartX.current
+    val edgeWidthPx = with(LocalDensity.current) { 20.dp.toPx() }
+
+    val edgeNestedScrollConnection = remember {
+        object : NestedScrollConnection {
+            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                if (drawerState.isClosed
+                    && available.x > 0f
+                    && gestureStartX.floatValue < edgeWidthPx) {
+                    scope.launch { drawerState.open() }
+                }
+                return Offset.Zero
+            }
         }
     }
 
@@ -138,7 +168,16 @@ fun TimelineScreen(
     ) { padding ->
         HorizontalPager(
             state = pagerState,
-            modifier = Modifier.padding(padding).fillMaxSize(),
+            modifier = Modifier
+                .padding(padding)
+                .fillMaxSize()
+                .pointerInput(Unit) {
+                    awaitEachGesture {
+                        val down = awaitFirstDown(requireUnconsumed = false)
+                        gestureStartX.floatValue = down.position.x
+                    }
+                }
+                .nestedScroll(edgeNestedScrollConnection),
             flingBehavior = PagerDefaults.flingBehavior(
                 state = pagerState,
                 snapAnimationSpec = spring(

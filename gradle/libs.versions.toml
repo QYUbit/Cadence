@@ -22,6 +22,7 @@ navigationComposeAndroid = "2.9.5"
 hilt = "2.59.2"
 hiltNavigationCompose = "1.3.0"
 foundationLayout = "1.10.6"
+runtime = "1.11.1"
 
 [libraries]
 androidx-compose-bom-v20240900 = { module = "androidx.compose:compose-bom", version.ref = "androidxComposeBom" }
@@ -54,6 +55,7 @@ hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref
 hilt-compiler = { group = "com.google.dagger", name = "hilt-compiler", version.ref = "hilt" }
 androidx-hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navigation-compose", version.ref = "hiltNavigationCompose" }
 androidx-compose-foundation-layout = { group = "androidx.compose.foundation", name = "foundation-layout", version.ref = "foundationLayout" }
+androidx-compose-runtime = { group = "androidx.compose.runtime", name = "runtime", version.ref = "runtime" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

@@ -23,14 +23,19 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.qyub.mgr2.data.models.Event
+import com.qyub.mgr2.ui.components.DialogOption
 import com.qyub.mgr2.ui.components.EventBottomSheet
 import com.qyub.mgr2.ui.components.EventCard
+import com.qyub.mgr2.ui.components.OptionDialog
+import com.qyub.mgr2.ui.components.PlanningDialog
 import java.time.LocalDate
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -44,7 +49,12 @@ fun InboxScreen(
     var showSheet by remember { mutableStateOf(false) }
     var eventToEdit by remember { mutableStateOf<Event?>(null) }
 
+    var contextMenuEvent by remember { mutableStateOf<Event?>(null) }
+    var planningEvent by remember {mutableStateOf<Event?>(null)}
+
     val currentDate = LocalDate.now()
+
+    val haptic = LocalHapticFeedback.current
 
     Scaffold(
         floatingActionButton = {
@@ -93,9 +103,44 @@ fun InboxScreen(
                         onClick = {
                             eventToEdit = it
                             showSheet = true
+                        },
+                        onLongPress = {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            contextMenuEvent = it
                         }
                     )
                 }
+            }
+
+            contextMenuEvent?.let { ev ->
+                OptionDialog(
+                    onDismissRequest = { contextMenuEvent = null },
+                    title = ev.title,
+                    options = listOf(
+                        DialogOption("Set Date") {
+                            planningEvent = ev
+                            contextMenuEvent = null
+                        },
+                        DialogOption("Edit") {
+                            eventToEdit = ev
+                            showSheet = true
+                        },
+                        DialogOption("Delete") {
+                            viewModel.deleteEvent(ev)
+                            contextMenuEvent = null
+                        }
+                    ),
+                )
+            }
+
+            planningEvent?.let { ev ->
+                PlanningDialog(
+                    eventName = ev.title,
+                    onConfirm = { date, time ->
+                        planningEvent = null
+                    },
+                    onDismissRequest = { planningEvent = null }
+                )
             }
 
             if (showSheet) {
