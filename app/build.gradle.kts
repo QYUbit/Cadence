@@ -1,5 +1,3 @@
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -10,16 +8,16 @@ plugins {
 
 android {
 
-    namespace = "com.example.myapp"
+    namespace = "com.qyub.mgr2"
 
-    compileSdk = 36
+    compileSdk = 37
 
 
     defaultConfig {
 
-        applicationId = "com.example.myapp"
+        applicationId = "com.qyub.mgr2"
 
-        minSdk = 24
+        minSdk = 26
 
         targetSdk = 36
 
@@ -40,12 +38,6 @@ android {
         sourceCompatibility = JavaVersion.VERSION_21
 
         targetCompatibility = JavaVersion.VERSION_21
-    }
-
-
-    kotlin {
-
-        jvmToolchain(21)
     }
 }
 

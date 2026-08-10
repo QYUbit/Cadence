@@ -1,9 +1,9 @@
 [versions]
 # --- Core ---
-agp                     = "9.0.1"
-kotlin                  = "2.4.10"
-ksp                     = "2.1.0-1.0.29"
-compileSdk              = "36"
+agp                     = "9.1.0"
+kotlin                  = "2.2.10"
+ksp                     = "2.3.2"
+compileSdk              = "37"
 minSdk                  = "26"
 targetSdk               = "36"
 
@@ -129,7 +129,6 @@ coroutines = [
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 android-library = { id = "com.android.library", version.ref = "agp" }
-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
