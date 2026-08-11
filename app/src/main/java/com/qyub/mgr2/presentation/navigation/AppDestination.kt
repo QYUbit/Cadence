@@ -11,7 +11,13 @@ data object Timeline : AppDestination
 @Serializable
 data object Settings : AppDestination
 
+@Serializable
+data class EventEdit(
+    val eventId: Int?
+) : AppDestination
+
 fun AppDestination.showDrawer(): Boolean = when(this) {
     is Timeline -> true
     is Settings -> true
+    else -> false
 }

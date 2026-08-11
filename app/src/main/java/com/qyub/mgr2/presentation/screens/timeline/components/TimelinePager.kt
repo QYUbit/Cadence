@@ -20,8 +20,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.qyub.mgr2.presentation.screens.timeline.EventUIState
 import com.qyub.mgr2.presentation.screens.timeline.TimelineUIState
-import com.qyub.mgr2.presentation.screens.timeline.UIEvent
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 
@@ -30,7 +30,7 @@ fun TimelinePager(
     modifier: Modifier = Modifier,
     uiState: TimelineUIState,
     onDayChange: (LocalDate) -> Unit = {},
-    onEventClick: (UIEvent) -> Unit = {}
+    onEventClick: (EventUIState) -> Unit = {}
 ) {
     val pagerState = rememberPagerState(
         initialPage = Int.MAX_VALUE / 2,

@@ -30,8 +30,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.qyub.mgr2.presentation.screens.timeline.EventUIState
 import com.qyub.mgr2.presentation.screens.timeline.TimelineUIState
-import com.qyub.mgr2.presentation.screens.timeline.UIEvent
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -41,7 +41,7 @@ fun Timeline(
     modifier: Modifier = Modifier,
     uiState: TimelineUIState,
     day: LocalDate,
-    onEventClick: (UIEvent) -> Unit = {},
+    onEventClick: (EventUIState) -> Unit = {},
 ) {
     val scrollState = rememberScrollState()
 
@@ -113,9 +113,9 @@ fun Timeline(
                 }
             }
 
-            uiState.eventItems.forEach { uiEvent ->
+            uiState.events.forEach { event ->
                 TimelineCard(
-                    event = uiEvent,
+                    event = event,
                     onClick = { onEventClick(it) },
                     fullWidth = maxWidth
                 )

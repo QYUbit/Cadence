@@ -22,6 +22,18 @@ class EventRepositoryImpl @Inject constructor(
         eventDao.insert(event.toEntity())
     }
 
+    override suspend fun updateEvent(event: Event) {
+        eventDao.update(event.toEntity())
+    }
+
+    override suspend fun deleteEvent(event: Event) {
+        eventDao.delete(event.toEntity())
+    }
+
+    override suspend fun getEventById(id: Int): Event {
+        return eventDao.getEventById(id).toEvent()
+    }
+
     override suspend fun getEventsForDate(date: LocalDate): List<Event> {
         return eventCache.getOrPut(date) {
             eventDao.getEventsForDate(date.toEpochDay()).map { it.toEvent() }

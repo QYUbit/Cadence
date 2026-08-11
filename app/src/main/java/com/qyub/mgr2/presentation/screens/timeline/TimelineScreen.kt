@@ -18,6 +18,9 @@ import androidx.compose.material3.TopAppBarColors
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.font.FontWeight
@@ -25,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.qyub.mgr2.presentation.screens.timeline.components.EventSheet
 import com.qyub.mgr2.presentation.screens.timeline.components.TimelinePager
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -33,7 +37,9 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun TimelineScreen(
     modifier: Modifier = Modifier,
-    onOpenMenu: () -> Unit,
+    onOpenMenu: () -> Unit = {},
+    onEventCreate: () -> Unit = {},
+    onEventEdit: (Int) -> Unit = {},
     viewModel: TimelineViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -43,7 +49,7 @@ fun TimelineScreen(
         floatingActionButton = {
             FloatingActionButton(
                 modifier = Modifier.navigationBarsPadding(),
-                onClick = {},
+                onClick = onEventCreate,
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary,
                 shape = CircleShape
@@ -79,8 +85,25 @@ fun TimelineScreen(
                 .padding(padding)
                 .padding(start = 16.dp),
             uiState = uiState,
-            onDayChange = { viewModel.setDay(it) }
+            onDayChange = { viewModel.setDay(it) },
+            onEventClick = { viewModel.setInspectedEvent(it) }
         )
+
+        if (uiState.inspectedEvent != null) {
+            EventSheet(
+                event = uiState.inspectedEvent!!,
+                onDismiss = {
+                    viewModel.setInspectedEvent(null)
+                },
+                onEdit = {
+                    onEventEdit(uiState.inspectedEvent!!.id)
+                },
+                onDelete = {
+                    viewModel.onEventDelete(uiState.inspectedEvent!!)
+                    viewModel.setInspectedEvent(null)
+                }
+            )
+        }
     }
 }
 

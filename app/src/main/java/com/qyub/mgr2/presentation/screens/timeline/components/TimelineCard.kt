@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.runtime.Composable
-import com.qyub.mgr2.presentation.screens.timeline.UIEvent
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -19,13 +18,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.qyub.mgr2.presentation.screens.timeline.EventUIState
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
 @Composable
 fun TimelineCard(
-    event: UIEvent,
-    onClick: (UIEvent) -> Unit,
+    event: EventUIState,
+    onClick: (EventUIState) -> Unit,
     fullWidth: Dp
 ) {
     Box(
@@ -34,7 +34,7 @@ fun TimelineCard(
             .fillMaxWidth(event.width)
             .height(event.height.dp)
             .background(
-                color = event.color,
+                color = event.eventRef.color,
                 shape = MaterialTheme.shapes.small
             )
             .pointerInput(event.id) {
@@ -49,7 +49,7 @@ fun TimelineCard(
         ) {
             if (event.height >= 30) {
                 Text(
-                    text = event.title,
+                    text = event.eventRef.title,
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onPrimary,
                     textAlign = TextAlign.Start,
@@ -59,7 +59,7 @@ fun TimelineCard(
 
             if (event.height >= 60) {
                 Text(
-                    text = "${event.startTime.format(DateTimeFormatter.ofPattern("HH:mm"))} - ${getEventEnd(event).format(DateTimeFormatter.ofPattern("HH:mm"))}",
+                    text = "${formatTime(event.startTime)} - ${formatTime(event.endTime)}",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f),
                     textAlign = TextAlign.Start,
@@ -70,6 +70,6 @@ fun TimelineCard(
     }
 }
 
-private fun getEventEnd(event: UIEvent): LocalTime {
-    return event.startTime.plusMinutes((event.duration).toLong()) ?: LocalTime.of(0, 0)
+private fun formatTime(time: LocalTime): String {
+    return time.format(DateTimeFormatter.ofPattern("HH:mm"))
 }

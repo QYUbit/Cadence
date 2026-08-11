@@ -14,6 +14,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.ui.NavDisplay
+import com.qyub.mgr2.presentation.screens.event.EventEditScreen
 import com.qyub.mgr2.presentation.screens.timeline.TimelineScreen
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -33,6 +34,7 @@ fun AppNavGraph() {
     ) {
         ModalNavigationDrawer(
             drawerState = drawerState,
+            gesturesEnabled = backStack.last().showDrawer(),
             drawerContent = {
                 AppDrawer(
                     currentDestination = backStack.last(),
@@ -50,12 +52,21 @@ fun AppNavGraph() {
                     when (key) {
                         is Timeline -> NavEntry(key) {
                             TimelineScreen(
-                                onOpenMenu = { scope.launch { drawerState.open() } }
+                                onOpenMenu = { scope.launch { drawerState.open() } },
+                                onEventCreate = { scope.launch { backStack.add(EventEdit(null)) } },
+                                onEventEdit = { scope.launch { backStack.add(EventEdit(it)) } }
                             )
                         }
 
                         is Settings -> NavEntry(key) {
 
+                        }
+
+                        is EventEdit -> NavEntry(key) {
+                            EventEditScreen(
+                                eventId = key.eventId,
+                                onBack = { backStack.removeLastOrNull() }
+                            )
                         }
                     }
                 }

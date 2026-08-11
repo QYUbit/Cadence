@@ -8,16 +8,15 @@ import java.time.LocalTime
 
 data class TimelineUIState(
     val displayDay: LocalDate = LocalDate.now(),
-    val events: List<Event> = emptyList(),
-    val eventItems: List<UIEvent> = emptyList()
+    val events: List<EventUIState> = emptyList(),
+    val inspectedEvent: EventUIState? = null,
 )
 
-data class UIEvent(
+data class EventUIState(
     val id: Int,
-    val title: String,
-    val color: Color,
+    val eventRef: Event,
     val startTime: LocalTime,
-    val duration: Int,
+    val endTime: LocalTime,
     val top: Int,
     val left: Float,
     val width: Float,

@@ -3,8 +3,10 @@ package com.qyub.mgr2.presentation.screens.timeline
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.qyub.mgr2.domain.repository.EventRepository
 import com.qyub.mgr2.domain.usecase.GetEventsUseCase
 import com.qyub.mgr2.domain.usecase.PreloadEventsUseCase
+import com.qyub.mgr2.presentation.screens.timeline.lib.calculateEventDimensions
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,29 +23,21 @@ import java.time.Duration
 @HiltViewModel
 class TimelineViewModel @Inject constructor(
     private val getEventsUseCase: GetEventsUseCase,
-    private val preloadEventsUseCase: PreloadEventsUseCase
+    private val preloadEventsUseCase: PreloadEventsUseCase,
+    private val eventRepository: EventRepository,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(TimelineUIState())
     val uiState: StateFlow<TimelineUIState> = _uiState.asStateFlow()
 
-    private val _events = Channel<TimelineEvent>(Channel.BUFFERED)
-    val events = _events.receiveAsFlow()
-
     init {
         loadEventItems()
-    }
-
-    fun onEvent(event: TimelineEvent) {
-        when(event) {
-            else -> {}
-        }
     }
 
     private fun loadEventItems() {
         viewModelScope.launch {
             val eventItems = getEventsUseCase(_uiState.value.displayDay)
             _uiState.update {
-                it.copy(events = eventItems)
+                it.copy(events = calculateEventDimensions(eventItems))
             }
             preloadEventsUseCase(_uiState.value.displayDay.minusDays(1))
             preloadEventsUseCase(_uiState.value.displayDay.minusDays(2))
@@ -57,5 +51,17 @@ class TimelineViewModel @Inject constructor(
             it.copy(displayDay = day)
         }
         loadEventItems()
+    }
+
+    fun setInspectedEvent(event: EventUIState?) {
+        _uiState.update {
+            it.copy(inspectedEvent = event)
+        }
+    }
+
+    fun onEventDelete(event: EventUIState) {
+        viewModelScope.launch {
+            eventRepository.deleteEvent(event.eventRef)
+        }
     }
 }
