@@ -2,7 +2,9 @@ package com.qyub.mgr2.presentation.screens.timeline
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
+import com.qyub.mgr2.domain.model.Event
 import com.qyub.mgr2.domain.repository.EventRepository
 import com.qyub.mgr2.domain.usecase.GetEventsUseCase
 import com.qyub.mgr2.domain.usecase.PreloadEventsUseCase
@@ -12,6 +14,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -35,10 +38,13 @@ class TimelineViewModel @Inject constructor(
 
     private fun loadEventItems() {
         viewModelScope.launch {
-            val eventItems = getEventsUseCase(_uiState.value.displayDay)
-            _uiState.update {
-                it.copy(events = calculateEventDimensions(eventItems))
-            }
+            getEventsUseCase(_uiState.value.displayDay)
+                .collect { eventItems ->
+                    _uiState.update {
+                        it.copy(events = calculateEventDimensions(eventItems))
+                    }
+                }
+
             preloadEventsUseCase(_uiState.value.displayDay.minusDays(1))
             preloadEventsUseCase(_uiState.value.displayDay.minusDays(2))
             preloadEventsUseCase(_uiState.value.displayDay.plusDays(1))

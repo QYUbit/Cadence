@@ -1,8 +1,6 @@
 package com.qyub.mgr2.presentation.screens.event
 
-import android.R
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -22,9 +20,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -32,6 +32,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.qyub.mgr2.presentation.screens.event.components.DatePickerDialog
 import com.qyub.mgr2.presentation.screens.event.components.TimePickerDialog
+import kotlinx.coroutines.launch
 
 @Composable
 fun EventEditScreen(
@@ -41,9 +42,14 @@ fun EventEditScreen(
     viewModel: EventEditViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val scope = rememberCoroutineScope()
 
-    if (eventId != null) {
-        viewModel.loadEvent(eventId)
+    LaunchedEffect(eventId) {
+        if (eventId != null) {
+            viewModel.loadEvent(eventId)
+        } else {
+            viewModel.resetState()
+        }
     }
 
     var showDatePicker by remember { mutableStateOf(false) }
@@ -73,8 +79,10 @@ fun EventEditScreen(
             )
             TextButton(
                 onClick = {
-                    if (eventId != null) viewModel.submitEdit() else viewModel.submitCreate()
-                    onBack()
+                    scope.launch {
+                        if (eventId != null) viewModel.submitEdit() else viewModel.submitCreate()
+                        onBack()
+                    }
                 },
                 modifier = Modifier.background(
                     shape = MaterialTheme.shapes.extraLarge,
@@ -87,7 +95,7 @@ fun EventEditScreen(
 
         TextField(
             value = uiState.title,
-            onValueChange = viewModel::setTitle
+            onValueChange = { viewModel.setTitle(it) }
         )
 
         OutlinedTextField(

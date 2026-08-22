@@ -7,6 +7,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -20,23 +21,28 @@ class EventEditViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(EventEditUIState())
     val uiState: StateFlow<EventEditUIState> = _uiState.asStateFlow()
 
+    private var loadedEventId: Int? = null
+
     fun loadEvent(id: Int) {
+        if (loadedEventId == id) return
         viewModelScope.launch {
-            val event = eventRepository.getEventById(id)
+            val event = eventRepository.getEventById(id).first()
             _uiState.update { event.toEventEditUIState() }
+            loadedEventId = id
         }
     }
 
-    fun submitCreate() {
-        viewModelScope.launch {
-            eventRepository.insertEvent(_uiState.value.toEvent())
-        }
+    fun resetState() {
+        loadedEventId = null
+        _uiState.update { EventEditUIState() }
     }
 
-    fun submitEdit() {
-        viewModelScope.launch {
-            eventRepository.updateEvent(_uiState.value.toEvent())
-        }
+    suspend fun submitCreate() {
+        eventRepository.insertEvent(_uiState.value.toEvent())
+    }
+
+    suspend fun submitEdit() {
+        eventRepository.updateEvent(_uiState.value.toEvent())
     }
 
     fun setTitle(title: String) {

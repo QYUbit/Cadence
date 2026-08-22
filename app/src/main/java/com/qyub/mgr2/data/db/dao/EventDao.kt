@@ -7,6 +7,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
 import com.qyub.mgr2.data.db.entity.EventEntity
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface EventDao {
@@ -17,8 +18,8 @@ interface EventDao {
     @Delete
     suspend fun delete(event: EventEntity)
     @Query("SELECT * FROM events WHERE id = :id")
-    suspend fun getEventById(id: Int): EventEntity
+    fun getEventById(id: Int): Flow<EventEntity>
 
     @Query("SELECT * FROM events WHERE date = :date")
-    suspend fun getEventsForDate(date: Long): List<EventEntity>
+    fun getEventsForDate(date: Long): Flow<List<EventEntity>>
 }

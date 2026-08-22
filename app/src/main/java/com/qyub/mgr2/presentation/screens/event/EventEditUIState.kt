@@ -26,7 +26,7 @@ fun Event.toEventEditUIState() = EventEditUIState(
 )
 
 fun EventEditUIState.toEvent() = Event(
-    id = 0,
+    id = id ?: 0,
     title = title,
     color = Color.Red,
     date = date,

@@ -28,6 +28,7 @@ fun EventEntity.toEvent() = Event(
 )
 
 fun Event.toEntity() = EventEntity(
+    id = id,
     title = title,
     color = color.toArgb(),
     date = date.toEpochDay(),

@@ -6,8 +6,10 @@ import com.qyub.mgr2.data.db.entity.toEvent
 import com.qyub.mgr2.domain.model.Event
 import com.qyub.mgr2.domain.repository.EventRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
 import java.time.LocalDate
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -16,7 +18,7 @@ import javax.inject.Singleton
 class EventRepositoryImpl @Inject constructor(
     private val eventDao: EventDao
 ) : EventRepository {
-    val eventCache = mutableMapOf<LocalDate, List<Event>>()
+    val eventCache = mutableMapOf<LocalDate, Flow<List<Event>>>()
 
     override suspend fun insertEvent(event: Event) {
         eventDao.insert(event.toEntity())
@@ -30,17 +32,28 @@ class EventRepositoryImpl @Inject constructor(
         eventDao.delete(event.toEntity())
     }
 
-    override suspend fun getEventById(id: Int): Event {
-        return eventDao.getEventById(id).toEvent()
+    override suspend fun getEventById(id: Int): Flow<Event> {
+        return eventDao.getEventById(id).map { it.toEvent() }
     }
 
-    override suspend fun getEventsForDate(date: LocalDate): List<Event> {
+    override suspend fun getEventsForDate(date: LocalDate): Flow<List<Event>> {
         return eventCache.getOrPut(date) {
-            eventDao.getEventsForDate(date.toEpochDay()).map { it.toEvent() }
+            eventDao.getEventsForDate(date.toEpochDay()).map { events ->
+                events.map { item ->
+                    item.toEvent()
+                }
+            }
         }
     }
 
     override suspend fun preloadEventsForDate(date: LocalDate) {
-        eventCache.putIfAbsent(date, eventDao.getEventsForDate(date.toEpochDay()).map { it.toEvent() })
+        eventCache.putIfAbsent(
+            date,
+            eventDao.getEventsForDate(date.toEpochDay()).map { events ->
+                events.map { item ->
+                    item.toEvent()
+                }
+            }
+        )
     }
 }
