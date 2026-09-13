@@ -2,6 +2,7 @@ package com.qyub.mgr2.presentation.screens.timeline.components
 
 import android.annotation.SuppressLint
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -42,9 +43,8 @@ fun Timeline(
     uiState: TimelineUIState,
     day: LocalDate,
     onEventClick: (EventUIState) -> Unit = {},
+    scrollState: ScrollState = rememberScrollState()
 ) {
-    val scrollState = rememberScrollState()
-
     var currentMinuteOfDay by remember { mutableIntStateOf(getCurrentMinute()) }
 
     val totalMinutes = 24 * 60

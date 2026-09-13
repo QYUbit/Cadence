@@ -2,21 +2,16 @@ package com.qyub.mgr2.presentation.screens.timeline.components
 
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerDefaults
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -25,6 +20,8 @@ import com.qyub.mgr2.presentation.screens.timeline.TimelineUIState
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 
+private val ANCHOR_DATE = LocalDate.of(2000, 1, 1)
+
 @Composable
 fun TimelinePager(
     modifier: Modifier = Modifier,
@@ -32,11 +29,24 @@ fun TimelinePager(
     onDayChange: (LocalDate) -> Unit = {},
     onEventClick: (EventUIState) -> Unit = {}
 ) {
+    val initialPage = remember { pageForDay(uiState.displayDay) }
     val pagerState = rememberPagerState(
-        initialPage = Int.MAX_VALUE / 2,
+        initialPage = initialPage,
         pageCount = { Int.MAX_VALUE }
     )
 
+    // Shared scroll state for all pages
+    val scrollState = rememberScrollState()
+
+    // Sync pager with external day changes
+    LaunchedEffect(uiState.displayDay) {
+        val targetPage = pageForDay(uiState.displayDay)
+        if (pagerState.currentPage != targetPage) {
+            pagerState.scrollToPage(targetPage)
+        }
+    }
+
+    // Sync external day with pager swipes
     LaunchedEffect(pagerState) {
         snapshotFlow { pagerState.currentPage }.collect { page ->
             onDayChange(dayForPage(page))
@@ -58,42 +68,20 @@ fun TimelinePager(
         val day = dayForPage(page)
 
         Column {
-            /*if (allDayEvents.isNotEmpty()) {
-                FlowRow(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 6.dp, horizontal = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    allDayEvents.forEach { ev ->
-                        Box(
-                            event = ev,
-                            onClick = {
-                                eventToEdit = ev
-                                showSheet = true
-                            },
-                            modifier = Modifier
-                                .height(30.dp)
-                                .wrapContentWidth(unbounded = true)
-                        )
-                    }
-                }
-
-                HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f))
-            }*/
-
             Timeline(
-                uiState = uiState,
+                uiState = uiState.copy(
+                    events = uiState.events.filter { it.eventRef.date == day }
+                ),
                 day = day,
-                onEventClick = onEventClick
+                onEventClick = onEventClick,
+                scrollState = scrollState
             )
         }
     }
 }
 
 fun pageForDay(day: LocalDate): Int =
-    Int.MAX_VALUE / 2 + ChronoUnit.DAYS.between(LocalDate.now(), day).toInt()
+    Int.MAX_VALUE / 2 + ChronoUnit.DAYS.between(ANCHOR_DATE, day).toInt()
 
 fun dayForPage(page: Int): LocalDate =
-    LocalDate.now().plusDays((page - Int.MAX_VALUE / 2).toLong())
+    ANCHOR_DATE.plusDays((page - Int.MAX_VALUE / 2).toLong())
