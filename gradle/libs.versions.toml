@@ -41,6 +41,7 @@ espresso                = "3.6.1"
 navigationCompose       = "2.8.5"
 runtime                 = "1.11.4"
 lifecycleService        = "2.10.0"
+runtimeVersion = "1.12.1"
 
 [libraries]
 # AndroidX Core
@@ -102,6 +103,7 @@ androidx-compose-ui-test-manifest = { module = "androidx.compose.ui:ui-test-mani
 navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
 androidx-runtime = { group = "androidx.compose.runtime", name = "runtime", version.ref = "runtime" }
 androidx-lifecycle-service = { group = "androidx.lifecycle", name = "lifecycle-service", version.ref = "lifecycleService" }
+runtime = { group = "androidx.compose.runtime", name = "runtime", version.ref = "runtimeVersion" }
 
 [bundles]
 compose = [

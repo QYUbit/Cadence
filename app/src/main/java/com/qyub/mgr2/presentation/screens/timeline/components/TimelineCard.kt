@@ -34,7 +34,7 @@ fun TimelineCard(
             .fillMaxWidth(event.width)
             .height(event.height.dp)
             .background(
-                color = event.eventRef.color,
+                color = event.color,
                 shape = MaterialTheme.shapes.small
             )
             .pointerInput(event.id) {
@@ -49,7 +49,7 @@ fun TimelineCard(
         ) {
             if (event.height >= 30) {
                 Text(
-                    text = event.eventRef.title,
+                    text = event.taskRef.title,
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onPrimary,
                     textAlign = TextAlign.Start,

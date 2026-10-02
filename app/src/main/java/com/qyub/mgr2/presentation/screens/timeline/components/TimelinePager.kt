@@ -69,9 +69,7 @@ fun TimelinePager(
 
         Column {
             Timeline(
-                uiState = uiState.copy(
-                    events = uiState.events.filter { it.eventRef.date == day }
-                ),
+                events = uiState.events[day] ?: emptyList(),
                 day = day,
                 onEventClick = onEventClick,
                 scrollState = scrollState

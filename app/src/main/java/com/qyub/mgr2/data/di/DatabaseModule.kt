@@ -23,5 +23,5 @@ class DataBaseModule {
 
     @Provides
     @Singleton
-    fun provideEventDao(appDatabase: AppDatabase) = appDatabase.eventDao()
+    fun provideTaskDao(appDatabase: AppDatabase) = appDatabase.taskDao()
 }

@@ -1,6 +1,5 @@
 package com.qyub.mgr2.presentation.navigation
 
-import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,8 +16,9 @@ import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.ui.NavDisplay
 import com.qyub.mgr2.presentation.screens.event.EventEditScreen
 import com.qyub.mgr2.presentation.screens.timeline.TimelineScreen
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+
+// TODO Cleaner Transitions (especially for event edit screen)
 
 @Composable
 fun AppNavGraph() {

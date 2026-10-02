@@ -1,46 +1,45 @@
 package com.qyub.mgr2.data.repository
 
-import com.qyub.mgr2.data.db.dao.EventDao
+import com.qyub.mgr2.data.db.dao.TaskDao
+import com.qyub.mgr2.data.db.entity.toDomain
 import com.qyub.mgr2.data.db.entity.toEntity
-import com.qyub.mgr2.data.db.entity.toEvent
-import com.qyub.mgr2.domain.model.Event
-import com.qyub.mgr2.domain.repository.EventRepository
-import dagger.hilt.android.qualifiers.ApplicationContext
+import com.qyub.mgr2.domain.model.Task
+import com.qyub.mgr2.domain.repository.TaskRepository
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import java.time.LocalDate
+import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class EventRepositoryImpl @Inject constructor(
-    private val eventDao: EventDao
-) : EventRepository {
-    val eventCache = mutableMapOf<LocalDate, Flow<List<Event>>>()
+class TaskRepositoryImpl @Inject constructor(
+    private val taskDao: TaskDao
+) : TaskRepository {
+    // eventCache only contains event candidates
+    val eventCache = ConcurrentHashMap<LocalDate, Flow<List<Task>>>()
 
-    override suspend fun insertEvent(event: Event) {
-        eventDao.insert(event.toEntity())
+    override suspend fun insertTask(task: Task) {
+        taskDao.insert(task.toEntity())
     }
 
-    override suspend fun updateEvent(event: Event) {
-        eventDao.update(event.toEntity())
+    override suspend fun updateTask(task: Task) {
+        taskDao.update(task.toEntity())
     }
 
-    override suspend fun deleteEvent(event: Event) {
-        eventDao.delete(event.toEntity())
+    override suspend fun deleteTask(task: Task) {
+        taskDao.delete(task.toEntity())
     }
 
-    override suspend fun getEventById(id: Int): Flow<Event> {
-        return eventDao.getEventById(id).map { it.toEvent() }
+    override suspend fun getTaskById(id: Int): Flow<Task> {
+        return taskDao.getEventById(id).map { it.toDomain() }
     }
 
-    override suspend fun getEventsForDate(date: LocalDate): Flow<List<Event>> {
+    override suspend fun getEventsForDate(date: LocalDate): Flow<List<Task>> {
         return eventCache.getOrPut(date) {
-            eventDao.getEventsForDate(date.toEpochDay()).map { events ->
+            taskDao.getEventsForDate(date.toEpochDay()).map { events ->
                 events.map { item ->
-                    item.toEvent()
+                    item.toDomain()
                 }
             }
         }
@@ -49,9 +48,9 @@ class EventRepositoryImpl @Inject constructor(
     override suspend fun preloadEventsForDate(date: LocalDate) {
         eventCache.putIfAbsent(
             date,
-            eventDao.getEventsForDate(date.toEpochDay()).map { events ->
+            taskDao.getEventsForDate(date.toEpochDay()).map { events ->
                 events.map { item ->
-                    item.toEvent()
+                    item.toDomain()
                 }
             }
         )

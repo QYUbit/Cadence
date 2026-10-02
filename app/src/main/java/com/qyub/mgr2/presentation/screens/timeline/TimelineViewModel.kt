@@ -1,9 +1,8 @@
 package com.qyub.mgr2.presentation.screens.timeline
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.qyub.mgr2.domain.repository.EventRepository
+import com.qyub.mgr2.domain.repository.TaskRepository
 import com.qyub.mgr2.domain.usecase.GetEventsUseCase
 import com.qyub.mgr2.domain.usecase.PreloadEventsUseCase
 import com.qyub.mgr2.presentation.screens.timeline.lib.calculateEventDimensions
@@ -26,21 +25,21 @@ import javax.inject.Inject
 class TimelineViewModel @Inject constructor(
     private val getEventsUseCase: GetEventsUseCase,
     private val preloadEventsUseCase: PreloadEventsUseCase,
-    private val eventRepository: EventRepository,
+    private val eventRepository: TaskRepository,
 ) : ViewModel() {
 
     private val _displayDay = MutableStateFlow(LocalDate.now())
     private val _inspectedEvent = MutableStateFlow<EventUIState?>(null)
 
-    private val _events: Flow<List<EventUIState>> = _displayDay.flatMapLatest { day ->
+    private val _events: Flow<Map<LocalDate, List<EventUIState>>> = _displayDay.flatMapLatest { day ->
         preloadEvents(day)
         val days = listOf(day.minusDays(1), day, day.plusDays(1))
         combine(
             days.map { d ->
-                getEventsUseCase(d).map { calculateEventDimensions(it) }
+                getEventsUseCase(d).map { events -> d to calculateEventDimensions(events) }
             }
         ) { results ->
-            results.flatMap { it }
+            results.toMap()
         }
     }
 
@@ -79,7 +78,7 @@ class TimelineViewModel @Inject constructor(
 
     fun onEventDelete(event: EventUIState) {
         viewModelScope.launch {
-            eventRepository.deleteEvent(event.eventRef)
+            eventRepository.deleteTask(event.taskRef)
         }
     }
 }

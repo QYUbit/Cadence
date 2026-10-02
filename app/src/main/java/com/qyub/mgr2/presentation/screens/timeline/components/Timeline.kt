@@ -32,7 +32,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.qyub.mgr2.presentation.screens.timeline.EventUIState
-import com.qyub.mgr2.presentation.screens.timeline.TimelineUIState
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -40,7 +39,7 @@ import java.time.LocalTime
 @Composable
 fun Timeline(
     modifier: Modifier = Modifier,
-    uiState: TimelineUIState,
+    events: List<EventUIState>,
     day: LocalDate,
     onEventClick: (EventUIState) -> Unit = {},
     scrollState: ScrollState = rememberScrollState()
@@ -113,7 +112,7 @@ fun Timeline(
                 }
             }
 
-            uiState.events.forEach { event ->
+            events.forEach { event ->
                 TimelineCard(
                     event = event,
                     onClick = { onEventClick(it) },

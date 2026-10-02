@@ -1,14 +1,14 @@
 package com.qyub.mgr2.domain.repository
 
-import com.qyub.mgr2.domain.model.Event
+import com.qyub.mgr2.domain.model.Task
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
 
-interface EventRepository {
-    suspend fun insertEvent(event: Event)
-    suspend fun updateEvent(event: Event)
-    suspend fun deleteEvent(event: Event)
-    suspend fun getEventById(id: Int): Flow<Event>
-    suspend fun getEventsForDate(date: LocalDate): Flow<List<Event>>
+interface TaskRepository {
+    suspend fun insertTask(task: Task)
+    suspend fun updateTask(task: Task)
+    suspend fun deleteTask(task: Task)
+    suspend fun getTaskById(id: Int): Flow<Task>
+    suspend fun getEventsForDate(date: LocalDate): Flow<List<Task>>
     suspend fun preloadEventsForDate(date: LocalDate)
 }

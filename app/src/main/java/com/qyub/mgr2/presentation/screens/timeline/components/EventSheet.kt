@@ -76,7 +76,7 @@ fun EventSheet(
                 }
             }
 
-            Text(event.eventRef.title, style = MaterialTheme.typography.titleMedium)
+            Text(event.taskRef.title, style = MaterialTheme.typography.titleMedium)
         }
     }
 }

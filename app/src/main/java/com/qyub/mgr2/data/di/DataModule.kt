@@ -1,8 +1,8 @@
 package com.qyub.mgr2.data.di
 
 import com.qyub.mgr2.data.datastore.UserPreferencesDataStore
-import com.qyub.mgr2.data.repository.EventRepositoryImpl
-import com.qyub.mgr2.domain.repository.EventRepository
+import com.qyub.mgr2.data.repository.TaskRepositoryImpl
+import com.qyub.mgr2.domain.repository.TaskRepository
 import com.qyub.mgr2.domain.repository.UserPreferencesRepository
 import dagger.Binds
 import dagger.Module
@@ -23,7 +23,7 @@ abstract class DataModule {
 
     @Binds
     @Singleton
-    abstract fun bindEventRepository(
-        impl: EventRepositoryImpl,
-    ): EventRepository
+    abstract fun bindTaskRepository(
+        impl: TaskRepositoryImpl,
+    ): TaskRepository
 }

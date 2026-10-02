@@ -1,24 +1,27 @@
 package com.qyub.mgr2.presentation.screens.timeline.lib
 
-import com.qyub.mgr2.domain.model.Event
+import androidx.compose.ui.graphics.Color
+import com.qyub.mgr2.domain.model.Task
 import com.qyub.mgr2.presentation.screens.timeline.EventUIState
+import java.time.Duration
 import kotlin.math.max
 import kotlin.math.min
 
-fun calculateEventDimensions(events: List<Event>): List<EventUIState> {
-    val minDuration = 10
+fun calculateEventDimensions(events: List<Task.Scheduled>): List<EventUIState> {
+    val minDuration = Duration.ofMinutes(10)
     val minutesInDay = 24 * 60
 
-    data class Enriched(val event: Event, val startMin: Int, val endMin: Int)
+    data class Enriched(val event: Task.Scheduled, val startMin: Int, val endMin: Int, val duration: Duration)
 
     val enriched = events
-        //.filter { !it.isAllDay && it.startTime != null }
+        .filter { it.startTime != null }
         .mapNotNull { ev ->
             val start = ev.startTime ?: return@mapNotNull null
-            val dur = max(ev.duration ?: minDuration, minDuration)
+            val dur = maxOf(ev.duration ?: minDuration, minDuration)
             val startMin = start.toSecondOfDay() / 60
-            val endMin = min(startMin + dur, minutesInDay)
-            Enriched(ev, startMin, endMin)
+            val endMin = min(startMin + dur.toMinutes().toInt(), minutesInDay)
+            if (endMin < startMin) return@mapNotNull null
+            Enriched(ev, startMin, endMin, dur)
         }
         .sortedWith(compareBy({ it.startMin }, { it.endMin }))
 
@@ -73,17 +76,18 @@ fun calculateEventDimensions(events: List<Event>): List<EventUIState> {
             val col = assignment[e] ?: 0
             val left = col * baseWidth
             val top = e.startMin
-            val height = max(e.endMin - e.startMin, minDuration)
+            val height = max(e.endMin - e.startMin, minDuration.toMinutes().toInt())
             val width = if (i == group.size - 1) baseWidth - 0.05f else baseWidth - 0.01f
             result.add(EventUIState(
                 id = e.event.id,
-                eventRef = e.event,
-                startTime = e.event.startTime,
-                endTime = e.event.startTime.plusMinutes(e.event.duration.toLong()),
+                taskRef = e.event,
+                startTime = e.event.startTime!!, // events with valid startTimes were filtered above
+                endTime = e.event.startTime.plus(e.duration),
                 top = top,
                 left = left,
                 height = height,
                 width = width,
+                color = Color(e.event.color)
             ))
         }
     }
