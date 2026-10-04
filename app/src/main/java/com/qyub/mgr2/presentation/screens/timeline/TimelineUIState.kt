@@ -8,6 +8,7 @@ import java.time.LocalTime
 data class TimelineUIState(
     val displayDay: LocalDate = LocalDate.now(),
     val events: Map<LocalDate, List<EventUIState>> = emptyMap(),
+    val allDayEvents: Map<LocalDate, List<Task.Scheduled>> = emptyMap(),
     val inspectedEvent: EventUIState? = null,
 )
 

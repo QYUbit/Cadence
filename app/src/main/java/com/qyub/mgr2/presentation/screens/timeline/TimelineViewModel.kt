@@ -2,6 +2,7 @@ package com.qyub.mgr2.presentation.screens.timeline
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.qyub.mgr2.domain.model.Task
 import com.qyub.mgr2.domain.repository.TaskRepository
 import com.qyub.mgr2.domain.usecase.GetEventsUseCase
 import com.qyub.mgr2.domain.usecase.PreloadEventsUseCase
@@ -31,12 +32,16 @@ class TimelineViewModel @Inject constructor(
     private val _displayDay = MutableStateFlow(LocalDate.now())
     private val _inspectedEvent = MutableStateFlow<EventUIState?>(null)
 
-    private val _events: Flow<Map<LocalDate, List<EventUIState>>> = _displayDay.flatMapLatest { day ->
+    private val _dayEventsMap: Flow<Map<LocalDate, Pair<List<EventUIState>, List<Task.Scheduled>>>> = _displayDay.flatMapLatest { day ->
         preloadEvents(day)
         val days = listOf(day.minusDays(1), day, day.plusDays(1))
         combine(
             days.map { d ->
-                getEventsUseCase(d).map { events -> d to calculateEventDimensions(events) }
+                getEventsUseCase(d).map { tasks ->
+                    val timedTasks = tasks.filter { it.startTime != null }
+                    val allDayTasks = tasks.filter { it.startTime == null }
+                    d to (calculateEventDimensions(timedTasks) to allDayTasks)
+                }
             }
         ) { results ->
             results.toMap()
@@ -46,11 +51,12 @@ class TimelineViewModel @Inject constructor(
     val uiState: StateFlow<TimelineUIState> = combine(
         _displayDay,
         _inspectedEvent,
-        _events
-    ) { day, inspected, events ->
+        _dayEventsMap
+    ) { day, inspected, dayEventsMap ->
         TimelineUIState(
             displayDay = day,
-            events = events,
+            events = dayEventsMap.mapValues { it.value.first },
+            allDayEvents = dayEventsMap.mapValues { it.value.second },
             inspectedEvent = inspected
         )
     }.stateIn(
