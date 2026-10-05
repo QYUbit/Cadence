@@ -1,10 +1,10 @@
 package com.qyub.mgr2.presentation.screens.timeline
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -22,12 +22,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.qyub.mgr2.presentation.screens.timeline.components.CalendarNavigator
 import com.qyub.mgr2.presentation.screens.timeline.components.EventSheet
 import com.qyub.mgr2.presentation.screens.timeline.components.TimelinePager
 import java.time.LocalDate
@@ -43,6 +43,8 @@ fun TimelineScreen(
     viewModel: TimelineViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    var calendarOpen by remember { mutableStateOf(false) }
 
     Scaffold(
         modifier = modifier,
@@ -60,13 +62,22 @@ fun TimelineScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Text("${formatDayOfWeek(uiState.displayDay)} — ${uiState.displayDay.format(DateTimeFormatter.ofPattern("dd.MM.yyyy"))}")
+                    Text("${uiState.displayDay.format(DateTimeFormatter.ofPattern("dd.MM.yyyy"))} — ${formatDayOfWeek(uiState.displayDay)}")
                 },
                 navigationIcon = {
                     IconButton(
                         onClick = onOpenMenu
                     ) {
                         Icon(Icons.Filled.Menu, contentDescription = "Menu")
+                    }
+                },
+                actions = {
+                    IconButton(
+                        onClick = {
+                            calendarOpen = true
+                        }
+                    ) {
+                        Icon(Icons.Filled.CalendarToday, contentDescription = "Choose date")
                     }
                 },
                 colors = TopAppBarColors(
@@ -89,6 +100,16 @@ fun TimelineScreen(
             onEventClick = { viewModel.setInspectedEvent(it) }
         )
 
+        if (calendarOpen) {
+            CalendarNavigator(
+                initialDate = uiState.displayDay,
+                onConfirm = { date ->
+                    viewModel.setDay(date)
+                    calendarOpen = false
+                }
+            )
+        }
+
         if (uiState.inspectedEvent != null) {
             EventSheet(
                 event = uiState.inspectedEvent!!,
@@ -108,5 +129,5 @@ fun TimelineScreen(
 }
 
 private fun formatDayOfWeek(date: LocalDate): String {
-    return date.dayOfWeek.name.lowercase().replaceFirstChar { it.uppercase() }
+    return date.dayOfWeek.name.substring(0, 2).lowercase().replaceFirstChar { it.uppercase() }
 }
