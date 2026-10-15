@@ -24,11 +24,13 @@ import com.qyub.mgr2.domain.model.Occurrence
 import com.qyub.mgr2.presentation.screens.event.components.ColorPickerDialog
 import com.qyub.mgr2.presentation.screens.event.components.DatePickerDialog
 import com.qyub.mgr2.presentation.screens.event.components.MonthDatePickerDialog
+import com.qyub.mgr2.presentation.screens.event.components.SaveOptionDialog
 import com.qyub.mgr2.presentation.screens.event.components.TimePickerDialog
 import com.qyub.mgr2.presentation.screens.event.components.WeekdaySelection
 import com.qyub.mgr2.presentation.screens.event.components.YearDatePickerDialog
 import kotlinx.coroutines.launch
 import java.time.DayOfWeek
+import java.time.LocalDate
 import java.time.LocalTime
 import java.time.MonthDay
 
@@ -39,15 +41,17 @@ import java.time.MonthDay
 fun EventEditScreen(
     modifier: Modifier = Modifier,
     eventId: Int?,
+    occurrenceDate: String? = null,
     onBack: () -> Unit = {},
     viewModel: EventEditViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
 
-    LaunchedEffect(eventId) {
+    LaunchedEffect(eventId, occurrenceDate) {
         if (eventId != null) {
-            viewModel.loadEvent(eventId)
+            val targetDate = occurrenceDate?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
+            viewModel.loadEvent(eventId, targetDate)
         } else {
             viewModel.resetState()
         }
@@ -59,6 +63,7 @@ fun EventEditScreen(
     var showStartTimePicker by remember { mutableStateOf(false) }
     var occurrenceDropdownExpanded by remember { mutableStateOf(false) }
     var colorPickerOpen by remember { mutableStateOf(false) }
+    var showSaveOptionDialog by remember { mutableStateOf(false) }
 
     val occurrenceTypes = listOf("Fixed Date", "Daily", "Weekly", "Monthly", "Yearly")
     val currentOccurrenceLabel = when (uiState.occurrence) {
@@ -82,13 +87,17 @@ fun EventEditScreen(
                 actions = {
                     TextButton(
                         onClick = {
-                            scope.launch {
-                                if (eventId != null) {
-                                    viewModel.submitEdit()
-                                } else {
-                                    viewModel.submitCreate()
+                            if (eventId != null && uiState.isRepeatingSeries) {
+                                showSaveOptionDialog = true
+                            } else {
+                                scope.launch {
+                                    if (eventId != null) {
+                                        viewModel.submitEdit(saveIndividually = false)
+                                    } else {
+                                        viewModel.submitCreate()
+                                    }
+                                    onBack()
                                 }
-                                onBack()
                             }
                         }
                     ) {
@@ -373,6 +382,21 @@ fun EventEditScreen(
                 onConfirm = {
                     viewModel.setStartTime(it)
                     showStartTimePicker = false
+                }
+            )
+        }
+
+        if (showSaveOptionDialog) {
+            SaveOptionDialog(
+                onConfirm = { saveIndividually ->
+                    showSaveOptionDialog = false
+                    scope.launch {
+                        viewModel.submitEdit(saveIndividually = saveIndividually)
+                        onBack()
+                    }
+                },
+                onDismiss = {
+                    showSaveOptionDialog = false
                 }
             )
         }

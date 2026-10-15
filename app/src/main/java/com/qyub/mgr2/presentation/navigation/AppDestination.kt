@@ -13,7 +13,8 @@ data object Settings : AppDestination
 
 @Serializable
 data class EventEdit(
-    val eventId: Int?
+    val eventId: Int?,
+    val occurrenceDate: String? = null
 ) : AppDestination
 
 fun AppDestination.showDrawer(): Boolean = when(this) {

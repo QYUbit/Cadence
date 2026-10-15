@@ -2,6 +2,7 @@ package com.qyub.mgr2.data.db.entity
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.qyub.mgr2.domain.model.EventExceptionInfo
 import com.qyub.mgr2.domain.model.Occurrence
 import com.qyub.mgr2.domain.model.Task
 import java.time.DayOfWeek
@@ -10,12 +11,13 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.time.MonthDay
 
-@Entity(tableName = "events")
+@Entity(tableName = "tasks")
 data class TaskEntity(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
 
-    // Not represented in domain Task for now
-    val exceptionParentId: Long? = null,
+    val exceptionParentId: Int? = null,
+    val originalDate: Long? = null,
+    val isCanceled: Boolean = false,
 
     val title: String,
     val notes: String?,
@@ -39,6 +41,9 @@ fun Task.toEntity(): TaskEntity {
     when (this) {
         is Task.Scheduled -> return TaskEntity(
             id = id,
+            exceptionParentId = exceptionInfo?.exceptionParentId,
+            originalDate = exceptionInfo?.originalDate?.toEpochDay(),
+            isCanceled = exceptionInfo?.isCanceled ?: false,
             title = title,
             notes = notes,
             color = color,
@@ -87,6 +92,14 @@ fun TaskEntity.toDomain(): Task {
         )
     }
 
+    val exceptionInfo = if (exceptionParentId != null && originalDate != null) {
+        EventExceptionInfo(
+            exceptionParentId = exceptionParentId,
+            originalDate = LocalDate.ofEpochDay(originalDate),
+            isCanceled = isCanceled
+        )
+    } else null
+
     return Task.Scheduled(
         id = id,
         title = title,
@@ -108,7 +121,8 @@ fun TaskEntity.toDomain(): Task {
             "Yearly" -> Occurrence.Yearly(
                 MonthDay.of(monthOfYear!!, dayOfYearMonth!!))
             else -> throw IllegalStateException("Occurrence type $occurrenceType not supported")
-        }
+        },
+        exceptionInfo = exceptionInfo
     )
 }
 

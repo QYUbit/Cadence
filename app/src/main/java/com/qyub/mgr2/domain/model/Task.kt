@@ -4,6 +4,12 @@ import java.time.Duration
 import java.time.LocalDate
 import java.time.LocalTime
 
+data class EventExceptionInfo(
+    val exceptionParentId: Int,
+    val originalDate: LocalDate,
+    val isCanceled: Boolean = false
+)
+
 sealed interface Task {
     val id: Int
     val title: String
@@ -30,6 +36,8 @@ sealed interface Task {
         val occurrence: Occurrence,
         val rangeStart: LocalDate?,
         val rangeEnd: LocalDate?,
-        val startTime: LocalTime?
+        val startTime: LocalTime?,
+
+        val exceptionInfo: EventExceptionInfo? = null
     ) : Task
 }

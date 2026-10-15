@@ -38,8 +38,8 @@ import java.time.format.DateTimeFormatter
 fun TimelineScreen(
     modifier: Modifier = Modifier,
     onOpenMenu: () -> Unit = {},
-    onEventCreate: () -> Unit = {},
-    onEventEdit: (Int) -> Unit = {},
+    onEventCreate: (LocalDate) -> Unit = {},
+    onEventEdit: (Int, LocalDate) -> Unit = { _, _ -> },
     viewModel: TimelineViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -51,7 +51,7 @@ fun TimelineScreen(
         floatingActionButton = {
             FloatingActionButton(
                 modifier = Modifier.navigationBarsPadding(),
-                onClick = onEventCreate,
+                onClick = { onEventCreate(uiState.displayDay) },
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary,
                 shape = CircleShape
@@ -117,10 +117,14 @@ fun TimelineScreen(
                     viewModel.setInspectedEvent(null)
                 },
                 onEdit = {
-                    onEventEdit(uiState.inspectedEvent!!.id)
+                    onEventEdit(uiState.inspectedEvent!!.id, uiState.displayDay)
                 },
-                onDelete = {
-                    viewModel.onEventDelete(uiState.inspectedEvent!!)
+                onDeleteOccurrence = {
+                    viewModel.onDeleteOccurrence(uiState.inspectedEvent!!)
+                    viewModel.setInspectedEvent(null)
+                },
+                onDeleteSeries = {
+                    viewModel.onDeleteSeries(uiState.inspectedEvent!!)
                     viewModel.setInspectedEvent(null)
                 }
             )

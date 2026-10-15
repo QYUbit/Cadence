@@ -9,7 +9,7 @@ import com.qyub.mgr2.data.db.entity.TaskEntity
     entities = [
         TaskEntity::class
     ],
-    version = 12,
+    version = 13,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {

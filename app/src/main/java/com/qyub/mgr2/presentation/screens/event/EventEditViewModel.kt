@@ -4,6 +4,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.qyub.mgr2.domain.model.EventExceptionInfo
 import com.qyub.mgr2.domain.model.Occurrence
 import com.qyub.mgr2.domain.model.Task
 import com.qyub.mgr2.domain.repository.TaskRepository
@@ -15,6 +16,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.Duration
+import java.time.LocalDate
 import java.time.LocalTime
 import javax.inject.Inject
 
@@ -26,20 +28,23 @@ class EventEditViewModel @Inject constructor(
     val uiState: StateFlow<EventEditUIState> = _uiState.asStateFlow()
 
     private var loadedEventId: Int? = null
+    private var loadedTargetDate: LocalDate? = null
 
-    fun loadEvent(id: Int) {
-        if (loadedEventId == id) return
+    fun loadEvent(id: Int, targetDate: LocalDate? = null) {
+        if (loadedEventId == id && loadedTargetDate == targetDate) return
         viewModelScope.launch {
             val task = taskRepository.getTaskById(id).first()
             if (task is Task.Scheduled) {
-                _uiState.update { task.toEventEditUIState() }
+                _uiState.update { task.toEventEditUIState(targetDate) }
             }
             loadedEventId = id
+            loadedTargetDate = targetDate
         }
     }
 
     fun resetState() {
         loadedEventId = null
+        loadedTargetDate = null
         _uiState.update { EventEditUIState() }
     }
 
@@ -47,8 +52,30 @@ class EventEditViewModel @Inject constructor(
         taskRepository.insertTask(_uiState.value.toTask())
     }
 
-    suspend fun submitEdit() {
-        taskRepository.updateTask(_uiState.value.toTask())
+    suspend fun submitEdit(saveIndividually: Boolean = false) {
+        val state = _uiState.value
+        if (state.isRepeatingSeries && saveIndividually) {
+            val parentId = state.id ?: return
+            val exceptionTask = Task.Scheduled(
+                id = 0,
+                title = state.title,
+                notes = state.notes,
+                color = state.color.toArgb(),
+                duration = state.duration,
+                occurrence = Occurrence.FixedDate(state.date),
+                rangeStart = state.date,
+                rangeEnd = state.date,
+                startTime = if (state.isAllDay) null else state.startTime,
+                exceptionInfo = EventExceptionInfo(
+                    exceptionParentId = parentId,
+                    originalDate = state.originalDate,
+                    isCanceled = false
+                )
+            )
+            taskRepository.insertTask(exceptionTask)
+        } else {
+            taskRepository.updateTask(state.toTask())
+        }
     }
 
     fun setTitle(title: String) {

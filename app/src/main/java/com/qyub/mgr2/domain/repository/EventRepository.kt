@@ -8,6 +8,8 @@ interface TaskRepository {
     suspend fun insertTask(task: Task)
     suspend fun updateTask(task: Task)
     suspend fun deleteTask(task: Task)
+    suspend fun cancelOccurrence(parentTaskId: Int, originalDate: LocalDate)
+    suspend fun deleteTaskSeries(parentTaskId: Int)
     suspend fun getTaskById(id: Int): Flow<Task>
     suspend fun getEventsForDate(date: LocalDate): Flow<List<Task>>
     suspend fun preloadEventsForDate(date: LocalDate)

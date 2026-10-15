@@ -2,6 +2,7 @@ package com.qyub.mgr2.presentation.screens.event
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import com.qyub.mgr2.domain.model.EventExceptionInfo
 import com.qyub.mgr2.domain.model.Occurrence
 import com.qyub.mgr2.domain.model.Task
 import java.time.Duration
@@ -19,14 +20,19 @@ data class EventEditUIState(
     val duration: Duration? = Duration.ofMinutes(30),
     val occurrence: Occurrence = Occurrence.FixedDate(LocalDate.now()),
     val rangeStart: LocalDate? = null,
-    val rangeEnd: LocalDate? = null
+    val rangeEnd: LocalDate? = null,
+    val exceptionInfo: EventExceptionInfo? = null,
+    val originalDate: LocalDate = LocalDate.now(),
+    val isRepeatingSeries: Boolean = false
 )
 
-fun Task.Scheduled.toEventEditUIState(): EventEditUIState {
-    val baseDate = when (val occ = occurrence) {
+fun Task.Scheduled.toEventEditUIState(targetDate: LocalDate? = null): EventEditUIState {
+    val baseDate = targetDate ?: when (val occ = occurrence) {
         is Occurrence.FixedDate -> occ.date
         else -> rangeStart ?: LocalDate.now()
     }
+    val isRepeating = occurrence !is Occurrence.FixedDate && exceptionInfo == null
+
     return EventEditUIState(
         id = id,
         title = title,
@@ -38,7 +44,10 @@ fun Task.Scheduled.toEventEditUIState(): EventEditUIState {
         duration = duration ?: Duration.ofMinutes(30),
         occurrence = occurrence,
         rangeStart = rangeStart,
-        rangeEnd = rangeEnd
+        rangeEnd = rangeEnd,
+        exceptionInfo = exceptionInfo,
+        originalDate = baseDate,
+        isRepeatingSeries = isRepeating
     )
 }
 
@@ -56,6 +65,7 @@ fun EventEditUIState.toTask(): Task.Scheduled {
         occurrence = resolvedOccurrence,
         rangeStart = rangeStart,
         rangeEnd = rangeEnd,
-        startTime = if (isAllDay) null else startTime
+        startTime = if (isAllDay) null else startTime,
+        exceptionInfo = exceptionInfo
     )
 }

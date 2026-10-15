@@ -17,12 +17,12 @@ interface TaskDao {
     suspend fun update(event: TaskEntity)
     @Delete
     suspend fun delete(event: TaskEntity)
-    @Query("SELECT * FROM events WHERE id = :id")
+    @Query("SELECT * FROM tasks WHERE id = :id")
     fun getEventById(id: Int): Flow<TaskEntity>
 
-    @Query("SELECT *\n" +
-            "FROM events\n" +
-            "WHERE fixedDate = :date\n" +
-            "   OR (occurrenceType <> 'FixedDate' AND occurrenceType IS NOT NULL)")
+    @Query("SELECT * FROM tasks WHERE fixedDate = :date OR originalDate = :date OR (occurrenceType <> 'FixedDate' AND occurrenceType IS NOT NULL AND exceptionParentId IS NULL)")
     fun getEventsForDate(date: Long): Flow<List<TaskEntity>>
+
+    @Query("DELETE FROM tasks WHERE id = :parentId OR exceptionParentId = :parentId")
+    suspend fun deleteSeries(parentId: Int)
 }

@@ -82,9 +82,24 @@ class TimelineViewModel @Inject constructor(
         _inspectedEvent.value = event
     }
 
-    fun onEventDelete(event: EventUIState) {
+    fun onDeleteOccurrence(event: EventUIState) {
         viewModelScope.launch {
-            eventRepository.deleteTask(event.taskRef)
+            val task = event.taskRef
+            if (task.exceptionInfo != null) {
+                eventRepository.deleteTask(task)
+            } else if (task.occurrence !is com.qyub.mgr2.domain.model.Occurrence.FixedDate) {
+                eventRepository.cancelOccurrence(task.id, _displayDay.value)
+            } else {
+                eventRepository.deleteTask(task)
+            }
+        }
+    }
+
+    fun onDeleteSeries(event: EventUIState) {
+        viewModelScope.launch {
+            val task = event.taskRef
+            val parentId = task.exceptionInfo?.exceptionParentId ?: task.id
+            eventRepository.deleteTaskSeries(parentId)
         }
     }
 }

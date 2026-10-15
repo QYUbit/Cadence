@@ -19,9 +19,15 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.qyub.mgr2.domain.model.Occurrence
+import com.qyub.mgr2.presentation.screens.event.components.DeleteOptionDialog
 import com.qyub.mgr2.presentation.screens.timeline.EventUIState
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -30,11 +36,15 @@ fun EventSheet(
     event: EventUIState,
     onDismiss: () -> Unit = {},
     onEdit: () -> Unit = {},
-    onDelete: () -> Unit = {},
+    onDeleteOccurrence: () -> Unit = {},
+    onDeleteSeries: () -> Unit = {},
 ) {
     val modalBottomSheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = true
     )
+    var showDeleteOptionDialog by remember { mutableStateOf(false) }
+
+    val isRepeating = event.taskRef.occurrence !is Occurrence.FixedDate || event.taskRef.exceptionInfo != null
 
     ModalBottomSheet(
         sheetState = modalBottomSheetState,
@@ -49,7 +59,8 @@ fun EventSheet(
             verticalArrangement = Arrangement.spacedBy(15.dp)
         ) {
             Row(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 IconButton(
                     onClick = onDismiss
@@ -65,7 +76,14 @@ fun EventSheet(
                     }
 
                     IconButton(
-                        onClick = onDelete
+                        onClick = {
+                            if (isRepeating) {
+                                showDeleteOptionDialog = true
+                            } else {
+                                onDeleteOccurrence()
+                                onDismiss()
+                            }
+                        }
                     ) {
                         Icon(
                             Icons.Default.Delete,
@@ -78,5 +96,22 @@ fun EventSheet(
 
             Text(event.taskRef.title, style = MaterialTheme.typography.titleMedium)
         }
+    }
+
+    if (showDeleteOptionDialog) {
+        DeleteOptionDialog(
+            onConfirm = { deleteIndividually ->
+                showDeleteOptionDialog = false
+                if (deleteIndividually) {
+                    onDeleteOccurrence()
+                } else {
+                    onDeleteSeries()
+                }
+                onDismiss()
+            },
+            onDismiss = {
+                showDeleteOptionDialog = false
+            }
+        )
     }
 }

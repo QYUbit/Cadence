@@ -54,8 +54,8 @@ fun AppNavGraph() {
                         is Timeline -> NavEntry(key) {
                             TimelineScreen(
                                 onOpenMenu = { scope.launch { drawerState.open() } },
-                                onEventCreate = { scope.launch { backStack.add(EventEdit(null)) } },
-                                onEventEdit = { scope.launch { backStack.add(EventEdit(it)) } }
+                                onEventCreate = { date -> scope.launch { backStack.add(EventEdit(null, date.toString())) } },
+                                onEventEdit = { id, date -> scope.launch { backStack.add(EventEdit(id, date.toString())) } }
                             )
                         }
 
@@ -66,6 +66,7 @@ fun AppNavGraph() {
                         is EventEdit -> NavEntry(key) {
                             EventEditScreen(
                                 eventId = key.eventId,
+                                occurrenceDate = key.occurrenceDate,
                                 onBack = { backStack.removeLastOrNull() }
                             )
                         }

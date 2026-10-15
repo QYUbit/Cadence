@@ -15,42 +15,44 @@ class GetEventsUseCase @Inject constructor(
     suspend operator fun invoke(day: LocalDate): Flow<List<Task.Scheduled>> {
         val eventsFlow = taskRepository.getEventsForDate(day)
 
-        return eventsFlow.map { events ->
-            val list = mutableListOf<Task.Scheduled>()
+        return eventsFlow.map { tasks ->
+            val scheduledTasks = tasks.filterIsInstance<Task.Scheduled>()
 
-            events.forEach { event ->
-                when (event) {
-                    is Task.Scheduled ->
-                        if (event.occurrence.appliesToDate(day)
-                                && if (event.rangeStart != null) event.rangeStart <= day else true
-                                && if (event.rangeEnd != null) event.rangeEnd >= day else true) {
-                            list.add(event)
+            val baseTasks = scheduledTasks.filter { it.exceptionInfo == null }
+            val exceptions = scheduledTasks.filter { it.exceptionInfo != null }
+
+            val exceptionsForDayByParentId = exceptions
+                .filter { it.exceptionInfo?.originalDate == day }
+                .associateBy { it.exceptionInfo!!.exceptionParentId }
+
+            val resultList = mutableListOf<Task.Scheduled>()
+
+            baseTasks.forEach { task ->
+                val inRange = (task.rangeStart == null || task.rangeStart <= day) &&
+                        (task.rangeEnd == null || task.rangeEnd >= day)
+
+                if (inRange && task.occurrence.appliesToDate(day)) {
+                    val matchingException = exceptionsForDayByParentId[task.id]
+                    if (matchingException != null) {
+                        if (!matchingException.exceptionInfo!!.isCanceled) {
+                            resultList.add(matchingException)
                         }
-
-                    is Task.Unscheduled -> {}
+                    } else {
+                        resultList.add(task)
+                    }
                 }
             }
 
-            Log.i("GetEventsUseCase", "loading events for $day; found ${events.size} candidates, filtered ${list.size} final events")
+            exceptions.forEach { exc ->
+                val excInfo = exc.exceptionInfo!!
+                if (!excInfo.isCanceled && excInfo.originalDate != day && exc.occurrence.appliesToDate(day)) {
+                    resultList.add(exc)
+                }
+            }
 
-            list
+            Log.i("GetEventsUseCase", "loading events for $day; candidates ${tasks.size}, result ${resultList.size}")
+
+            resultList
         }
-
-        // TODO Cleaner code
-
-        /*
-
-        return eventsFlow.map { events ->
-            events.filter { event ->
-                when (event) {
-                    is Task.Scheduled ->
-                        event.occurrence.appliesToDate(day)
-                            && if (event.rangeStart != null) event.rangeStart <= day else true
-                                && if (event.rangeEnd != null) event.rangeEnd >= day else true
-
-                    is Task.Unscheduled -> false
-                }
-            }
-        }*/
     }
 }
